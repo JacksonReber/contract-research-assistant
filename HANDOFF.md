@@ -236,5 +236,5 @@ env:
 ## What to Skip (don't waste time on these)
 - **Don't change the SSE event schema.** AgentServer expects `ResponsesAgentStreamEvent` shapes. The frontend parses by `type:`. Adding custom event types is fine; renaming the standard ones breaks the UI.
 - **Don't add the OAuth scopes you think you need** (`all-apis`, `model-serving`). They aren't valid Apps user_authorization scope strings.
-- **Don't flip `server/retrieval.py` back to OBO** without reading `CLAUDE.md` — VS SDK will reject the OBO token.
+- **Don't flip `server/retrieval.py` back to OBO** without reading the [Auth Pattern](#auth-pattern-read-this-before-flipping-anything-to-obo) section above — the Vector Search backend has reliability caveats with OBO scopes in some workspaces.
 - **Don't add a `requirements.txt`.** The Apps runtime supports `pyproject.toml` + `uv.lock` natively. Stick to uv.

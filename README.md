@@ -24,7 +24,7 @@ Apps-async pattern.
 ├── server/                FastAPI + AgentServer (agent runs inside the App)
 │   ├── start_server.py    App entrypoint, mounts routes + static SPA
 │   ├── agent.py           @invoke / @stream — the port of v2's ResponsesAgent
-│   ├── retrieval.py       VS hybrid + reranker (App SP, see CLAUDE.md gotchas)
+│   ├── retrieval.py       VS hybrid + reranker (uses App SP — see HANDOFF.md auth section)
 │   ├── auth.py            OBO header resolution
 │   ├── db.py              Lakebase Postgres pool (OAuthConnection)
 │   ├── supervisor.py      LLM-as-judge scaffold (stub, KA_ENABLE_SUPERVISOR=true)
@@ -53,8 +53,7 @@ Apps-async pattern.
 ├── app.yaml               Apps runtime config (OAuth scopes, env vars)
 ├── pyproject.toml         uv-native (Python 3.11+)
 ├── PROJECT.md             Narrative architecture walkthrough (data flow, agent port, features)
-├── HANDOFF.md             Customization + deployment guide (drop in your corpus, ~6 config edits)
-└── CLAUDE.md              Operational handoff notes for future AI sessions
+└── HANDOFF.md             Customization + deployment guide (drop in your corpus, ~6 config edits)
 ```
 
 ## Documentation
@@ -178,21 +177,29 @@ open http://localhost:3000
 Local dev uses your PAT for outbound calls (no Apps proxy), so the OBO chain
 is bypassed and per-user ACL behavior won't show up until you deploy.
 
-## Auth model (important — read `CLAUDE.md` for the full story)
+## Auth model
 
-Both the Vector Search SDK and the Foundation Model API require legacy OAuth
-scopes (`all-apis` / `model-serving`) that are NOT declarable in Apps'
-`user_authorization` block. This app therefore uses the **App SP** for all
-downstream API calls (VS + LLM + Lakebase + UC writes). End-user attribution
-is preserved by setting `mlflow.trace.user` metadata explicitly from
-`X-Forwarded-Email` on each request — the trace is attributed correctly
-even though the API calls themselves run as the SP.
+Databricks Apps supports user-on-behalf-of (OBO) auth via declarable scopes in
+`user_authorization` — including `serving.serving-endpoints` (Foundation Model
+API) and `vectorsearch.vector-search-*` (Vector Search) as of 2026. In practice
+the picture is uneven:
+
+- **Foundation Model API** — OBO works with `serving.serving-endpoints`
+- **Vector Search** — declarable, but the VS backend has known caveats in some
+  workspaces (older OAuth integrations may need account-admin updates)
+- **Lakebase Postgres** — no OBO path today; SP-only
+- **UC writes (MLflow trace tables)** — SP-only in practice
+
+This app uses the **App SP** for ALL downstream calls (VS + FM + Lakebase + UC)
+to keep a single auth path and avoid the VS reliability gap. End-user
+attribution is preserved at the trace level by setting `mlflow.trace.user`
+metadata from the `X-Forwarded-Email` header on every request — the trace
+shows the actual user even though the underlying API call runs as the SP.
 
 ## See also
 
 - [`PROJECT.md`](PROJECT.md) — architecture walkthrough with code snippets per subsystem
 - [`HANDOFF.md`](HANDOFF.md) — customization guide for adapting the bundle to your workspace
-- `CLAUDE.md` — full operational notes, gotchas, and pre-deploy checklist
 - `agent_config.yaml` — retrieval + LLM tuning knobs
 - `app.yaml` — Apps runtime config (OAuth scopes, env vars)
 - `data/NOTICE.md` — corpus licensing

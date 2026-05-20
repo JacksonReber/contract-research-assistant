@@ -87,7 +87,7 @@ from databricks.vector_search.client import VectorSearchClient
 
 vsc = VectorSearchClient(disable_notice=True)
 
-# Drop existing index for dev iteration (matches the dev-mode contract documented in CLAUDE.md)
+# Drop existing index for dev iteration
 try:
     existing = vsc.get_index(endpoint_name=vs_endpoint, index_name=index_name)
     print(f"Existing index found; deleting for clean re-create")
