@@ -52,8 +52,18 @@ Apps-async pattern.
 ├── agent_config.yaml      VS endpoint/index + LLM + retrieval tuning
 ├── app.yaml               Apps runtime config (OAuth scopes, env vars)
 ├── pyproject.toml         uv-native (Python 3.11+)
+├── PROJECT.md             Narrative architecture walkthrough (data flow, agent port, features)
+├── HANDOFF.md             Customization + deployment guide (drop in your corpus, ~6 config edits)
 └── CLAUDE.md              Operational handoff notes for future AI sessions
 ```
+
+## Documentation
+
+This repo ships three docs for different reader needs:
+
+- **`README.md`** (you are here) — quickstart, repo layout, full setup commands for *this* deployment
+- **[`PROJECT.md`](PROJECT.md)** — narrative architecture walkthrough: data pipeline, `ResponsesAgent → AgentServer` port, retrieval, tracing, Lakebase chat history, feedback, PDF viewer, supervisor scaffold. Read this to understand how the pieces fit.
+- **[`HANDOFF.md`](HANDOFF.md)** — customization + deployment guide for adapting the bundle to your own corpus + workspace. Read this if you want to fork-and-deploy.
 
 ## End-to-end setup
 
@@ -180,6 +190,8 @@ even though the API calls themselves run as the SP.
 
 ## See also
 
+- [`PROJECT.md`](PROJECT.md) — architecture walkthrough with code snippets per subsystem
+- [`HANDOFF.md`](HANDOFF.md) — customization guide for adapting the bundle to your workspace
 - `CLAUDE.md` — full operational notes, gotchas, and pre-deploy checklist
 - `agent_config.yaml` — retrieval + LLM tuning knobs
 - `app.yaml` — Apps runtime config (OAuth scopes, env vars)
