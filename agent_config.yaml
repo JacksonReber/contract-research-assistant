@@ -1,0 +1,39 @@
+# KA agent config — non-default retrieval tuning + LLM choice.
+# Loaded by server/config.py at import time.
+#
+# Mirrors v1's config (known-working retrieval params on the same VS index)
+# with the LLM bumped to claude-sonnet-4-5 for stronger demo output.
+
+agent:
+  name: contract_research_assistant
+  description: 'Contract Research Assistant — RAG over multi-modal contract corpus via VS Hybrid Search'
+
+  vector_index:
+    name: jreber_knowledge_assistant_demo.default.contracts_idx
+    endpoint: one-env-shared-endpoint-11
+    columns:
+      - chunk_id
+      - doc_id
+      - source_type
+      - source_path
+      - page_num
+      - chunk_to_retrieve
+      - image_uri
+
+  retrieval:
+    num_results: 20      # v1 default — bumped from typical 3-5 for cross-doc compare scenarios
+    query_type: HYBRID   # vector + BM25 keyword
+
+  llm:
+    endpoint: databricks-claude-sonnet-4-5
+    temperature: 0.0
+    max_tokens: 2048
+    system_prompt: |
+      You are a contract research assistant. Answer the user's question using ONLY the
+      retrieved contract excerpts below. Always cite the source document by doc_id. If
+      the excerpts do not contain enough information to answer, say so explicitly and
+      list which doc_ids you reviewed — do not invent details or speculate.
+
+      Format:
+        Answer: <2-4 sentences>
+        Sources: <comma-separated doc_id list>

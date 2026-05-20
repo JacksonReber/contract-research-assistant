@@ -1,0 +1,52 @@
+resources:
+  jobs:
+    setup_job:
+      name: '[${bundle.target}] contract-research-assistant · pipeline setup'
+      description: >-
+        Ingest PDFs from data/ → parsed_contracts (ai_parse_document)
+        → search_ready (ai_prep_search) → Vector Search Delta-Sync index.
+        Run once before deploying the app via scripts/deploy.sh.
+      tasks:
+        - task_key: ingest
+          notebook_task:
+            notebook_path: ../notebooks/00_ingest.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              volume: ${var.volume}
+              audit_schema: ${var.audit_schema}
+          new_cluster:
+            spark_version: 17.1.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 1
+            data_security_mode: SINGLE_USER
+        - task_key: parse
+          depends_on:
+            - task_key: ingest
+          notebook_task:
+            notebook_path: ../notebooks/01_parse.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              volume: ${var.volume}
+              audit_schema: ${var.audit_schema}
+          new_cluster:
+            spark_version: 17.1.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 1
+            data_security_mode: SINGLE_USER
+        - task_key: chunk_index
+          depends_on:
+            - task_key: parse
+          notebook_task:
+            notebook_path: ../notebooks/02_chunk_index.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              audit_schema: ${var.audit_schema}
+              vs_endpoint: ${var.vs_endpoint}
+          new_cluster:
+            spark_version: 17.1.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 1
+            data_security_mode: SINGLE_USER

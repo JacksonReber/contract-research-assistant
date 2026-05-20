@@ -1,0 +1,56 @@
+command: ['uvicorn', 'server.start_server:app', '--host', '0.0.0.0', '--port', '$DATABRICKS_APP_PORT']
+
+# OAuth scopes the Databricks Apps proxy requests when minting per-user
+# X-Forwarded-Access-Token. Required for OBO calls to:
+#  - serving.serving-endpoints: invoke the LLM endpoint via OpenAI-compat Foundation Model API.
+#  - vectorsearch.vector-search-endpoints: query the Vector Search index as the user.
+user_authorization:
+  scopes:
+    - serving.serving-endpoints
+    - vectorsearch.vector-search-endpoints
+
+env:
+  - name: PYTHONUNBUFFERED
+    value: '1'
+  - name: PYTHONPATH
+    value: /app/python/source_code
+  - name: AGENT_CONFIG_PATH
+    value: agent_config.yaml
+
+  # MLflow tracing → Unity Catalog (mas-demo-app pattern; configure day-one so
+  # OTel tables populate from first request — avoids v2's sync gap).
+  # The app SP needs: USE_CATALOG on KA_TRACE_CATALOG, USE_SCHEMA on
+  # KA_TRACE_CATALOG.KA_TRACE_SCHEMA, MODIFY + SELECT on the auto-created
+  # `<prefix>_otel_*` tables, and CAN_USE on the SQL warehouse below.
+  - name: MLFLOW_TRACKING_URI
+    value: databricks
+  - name: MLFLOW_EXPERIMENT_NAME
+    value: /Shared/contract_research_assistant
+  - name: MLFLOW_TRACING_SQL_WAREHOUSE_ID
+    value: '4b9b953939869799'  # Shared Unity Catalog Serverless — same as mas-demo-app
+  - name: KA_TRACE_CATALOG
+    value: jreber_knowledge_assistant_demo
+  - name: KA_TRACE_SCHEMA
+    value: audit
+  - name: KA_TRACE_TABLE_PREFIX
+    value: ka_v3
+
+  # Lakebase Autoscaling — autoscaling tier skips resource binding. Set all
+  # connection vars explicitly here (PGHOST/PGUSER/PGPORT/PGDATABASE/ENDPOINT_NAME).
+  # The App SP must be registered via `databricks postgres create-role` after
+  # `databricks apps create` reveals the SP client_id (see scripts/deploy.sh).
+  - name: ENDPOINT_NAME
+    value: 'projects/ka-v3/branches/production/endpoints/primary'
+  - name: PGHOST
+    value: 'ep-green-hat-d10d2olh.database.us-west-2.cloud.databricks.com'
+  - name: PGDATABASE
+    value: 'databricks_postgres'
+  - name: PGPORT
+    value: '5432'
+  - name: PGSSLMODE
+    value: 'require'
+  # PGUSER = App SP client_id. Registered as Postgres role via
+  # `databricks postgres create-role` (role-id cra-app) and granted
+  # SELECT/INSERT/UPDATE/DELETE on threads + messages via psql GRANT.
+  - name: PGUSER
+    value: 'c04024f5-eb69-4f22-8188-cc5ffa16c7ee'
