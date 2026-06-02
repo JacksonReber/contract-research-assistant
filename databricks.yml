@@ -7,23 +7,23 @@ include:
 variables:
   catalog:
     description: UC catalog for the corpus + index + trace tables
-    default: jreber_knowledge_assistant_demo
+    default: serverless_stable_ekaiik_catalog
   schema:
     description: Schema inside the catalog for the corpus tables + VS index
-    default: default
+    default: contract_research
   audit_schema:
     description: Schema for the audit + trace storage tables
-    default: audit
+    default: contract_research_audit
   volume:
     description: UC Volume name for the source PDFs (under catalog.schema)
     default: contracts
   vs_endpoint:
     description: Vector Search endpoint name. Must already exist.
-    default: one-env-shared-endpoint-11
+    default: contract-research-vs
 
 targets:
   dev:
     default: true
     mode: development
     workspace:
-      profile: e2-demo-field-eng
+      profile: fevm-stable-ekaiik

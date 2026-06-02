@@ -9,8 +9,8 @@ agent:
   description: 'Contract Research Assistant — RAG over multi-modal contract corpus via VS Hybrid Search'
 
   vector_index:
-    name: jreber_knowledge_assistant_demo.default.contracts_idx
-    endpoint: one-env-shared-endpoint-11
+    name: serverless_stable_ekaiik_catalog.contract_research.contracts_idx
+    endpoint: contract-research-vs
     columns:
       - chunk_id
       - doc_id

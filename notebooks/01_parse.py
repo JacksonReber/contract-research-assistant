@@ -33,7 +33,10 @@ raw_table = f"{catalog}.{schema}.raw_contracts"
 # COMMAND ----------
 from pyspark.sql.functions import expr, current_timestamp, col, input_file_name
 
-# Read PDFs as binary, run ai_parse_document with multi-modal options.
+# Read PDFs as binary, run ai_parse_document (text-only — image extraction
+# disabled: serverless image upload hits RESOURCE_EXHAUSTED and sets an
+# error_status that drops the doc at the chunk step. The PDF viewer opens the
+# source PDF by page, so extracted page images aren't needed.)
 binary_df = (
     spark.read.format("binaryFile")
     .option("pathGlobFilter", "*.pdf")
@@ -45,12 +48,7 @@ parsed_df = (
     binary_df
     .withColumn(
         "parsed",
-        expr(f"""
-            ai_parse_document(content, map(
-                'imageOutputPath', '{images_volume_path}',
-                'descriptionElementTypes', '*'
-            ))
-        """),
+        expr("ai_parse_document(content)"),
     )
     .withColumn("parsed_at", current_timestamp())
     .select("path", "parsed", "parsed_at")

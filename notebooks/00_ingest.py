@@ -26,7 +26,9 @@ source_root = dbutils.widgets.get("source_root")
 # MAGIC %md ## Bootstrap UC: catalog, schemas, volume
 
 # COMMAND ----------
-spark.sql(f"CREATE CATALOG IF NOT EXISTS {catalog}")
+# NOTE: Catalog must already exist — this workspace's users lack CREATE CATALOG
+# on the metastore. We target an existing catalog and only create schemas/volume.
+print(f"Using existing catalog: {catalog}")
 spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.{schema}")
 spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.{audit_schema}")
 spark.sql(f"CREATE VOLUME IF NOT EXISTS {catalog}.{schema}.{volume}")

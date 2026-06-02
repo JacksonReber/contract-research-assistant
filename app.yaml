@@ -27,11 +27,11 @@ env:
   - name: MLFLOW_EXPERIMENT_NAME
     value: /Shared/contract_research_assistant
   - name: MLFLOW_TRACING_SQL_WAREHOUSE_ID
-    value: '4b9b953939869799'  # Shared Unity Catalog Serverless — same as mas-demo-app
+    value: 'fd0836278b403a0e'  # Serverless Starter Warehouse — fevm-stable-ekaiik
   - name: KA_TRACE_CATALOG
-    value: jreber_knowledge_assistant_demo
+    value: serverless_stable_ekaiik_catalog
   - name: KA_TRACE_SCHEMA
-    value: audit
+    value: contract_research_audit
   - name: KA_TRACE_TABLE_PREFIX
     value: ka_v3
 
@@ -39,18 +39,17 @@ env:
   # connection vars explicitly here (PGHOST/PGUSER/PGPORT/PGDATABASE/ENDPOINT_NAME).
   # The App SP must be registered via `databricks postgres create-role` after
   # `databricks apps create` reveals the SP client_id (see scripts/deploy.sh).
+  # Lakebase chat history DISABLED for this deploy (blank vars → server/db.py
+  # no-ops gracefully). Re-populate ENDPOINT_NAME/PGHOST/PGUSER to re-enable.
   - name: ENDPOINT_NAME
-    value: 'projects/ka-v3/branches/production/endpoints/primary'
+    value: ''
   - name: PGHOST
-    value: 'ep-green-hat-d10d2olh.database.us-west-2.cloud.databricks.com'
+    value: ''
   - name: PGDATABASE
     value: 'databricks_postgres'
   - name: PGPORT
     value: '5432'
   - name: PGSSLMODE
     value: 'require'
-  # PGUSER = App SP client_id. Registered as Postgres role via
-  # `databricks postgres create-role` (role-id cra-app) and granted
-  # SELECT/INSERT/UPDATE/DELETE on threads + messages via psql GRANT.
   - name: PGUSER
-    value: 'c04024f5-eb69-4f22-8188-cc5ffa16c7ee'
+    value: ''

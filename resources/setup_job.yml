@@ -6,6 +6,7 @@ resources:
         Ingest PDFs from data/ → parsed_contracts (ai_parse_document)
         → search_ready (ai_prep_search) → Vector Search Delta-Sync index.
         Run once before deploying the app via scripts/deploy.sh.
+        Serverless compute (workspace is serverless-only).
       tasks:
         - task_key: ingest
           notebook_task:
@@ -15,11 +16,7 @@ resources:
               schema: ${var.schema}
               volume: ${var.volume}
               audit_schema: ${var.audit_schema}
-          new_cluster:
-            spark_version: 17.1.x-scala2.12
-            node_type_id: i3.xlarge
-            num_workers: 1
-            data_security_mode: SINGLE_USER
+              source_root: ${workspace.file_path}/data
         - task_key: parse
           depends_on:
             - task_key: ingest
@@ -30,11 +27,6 @@ resources:
               schema: ${var.schema}
               volume: ${var.volume}
               audit_schema: ${var.audit_schema}
-          new_cluster:
-            spark_version: 17.1.x-scala2.12
-            node_type_id: i3.xlarge
-            num_workers: 1
-            data_security_mode: SINGLE_USER
         - task_key: chunk_index
           depends_on:
             - task_key: parse
@@ -45,8 +37,3 @@ resources:
               schema: ${var.schema}
               audit_schema: ${var.audit_schema}
               vs_endpoint: ${var.vs_endpoint}
-          new_cluster:
-            spark_version: 17.1.x-scala2.12
-            node_type_id: i3.xlarge
-            num_workers: 1
-            data_security_mode: SINGLE_USER
