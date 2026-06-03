@@ -17,6 +17,15 @@ env:
   - name: AGENT_CONFIG_PATH
     value: agent_config.yaml
 
+  # Citation PDF serving — whitelist the source Volume(s) the citation route
+  # (server/routes/documents.py) may read. Must match where ingest staged the
+  # corpus: /Volumes/{catalog}/{schema}/{volume}/ from databricks.yml
+  # (serverless_stable_ekaiik_catalog / contract_research / contracts).
+  # Comma-separated for multiple. Without this it falls back to the old v3
+  # volume default and every citation 403s ("path outside allowed volumes").
+  - name: KA_ALLOWED_VOLUME_PREFIXES
+    value: /Volumes/serverless_stable_ekaiik_catalog/contract_research/contracts/
+
   # MLflow tracing → Unity Catalog (mas-demo-app pattern; configure day-one so
   # OTel tables populate from first request — avoids v2's sync gap).
   # The app SP needs: USE_CATALOG on KA_TRACE_CATALOG, USE_SCHEMA on
@@ -39,12 +48,14 @@ env:
   # connection vars explicitly here (PGHOST/PGUSER/PGPORT/PGDATABASE/ENDPOINT_NAME).
   # The App SP must be registered via `databricks postgres create-role` after
   # `databricks apps create` reveals the SP client_id (see scripts/deploy.sh).
-  # Lakebase chat history DISABLED for this deploy (blank vars → server/db.py
-  # no-ops gracefully). Re-populate ENDPOINT_NAME/PGHOST/PGUSER to re-enable.
+  # Lakebase chat history ENABLED. Project: contract-research-chat (Autoscaling,
+  # pg17). The App SP is registered as Postgres role sp-contract-research via
+  # `databricks postgres create-role` (identity_type SERVICE_PRINCIPAL); PGUSER
+  # is that SP client_id. Schema bootstrapped from scripts/bootstrap_schema.sql.
   - name: ENDPOINT_NAME
-    value: ''
+    value: 'projects/contract-research-chat/branches/production/endpoints/primary'
   - name: PGHOST
-    value: ''
+    value: 'ep-bold-dew-d2upyvj6.database.us-east-1.cloud.databricks.com'
   - name: PGDATABASE
     value: 'databricks_postgres'
   - name: PGPORT
@@ -52,4 +63,4 @@ env:
   - name: PGSSLMODE
     value: 'require'
   - name: PGUSER
-    value: ''
+    value: '28070953-9229-4f66-ae01-c85bc370f54b'
