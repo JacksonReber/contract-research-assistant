@@ -45,6 +45,8 @@ export function ChatPage() {
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openCitation, setOpenCitation] = useState<Citation | null>(null);
+  // Which assistant answer's citations the sidebar shows. null = follow latest.
+  const [selectedAssistantId, setSelectedAssistantId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Load config + thread list on mount.
@@ -76,10 +78,28 @@ export function ChatPage() {
     refreshThreads();
   }, [refreshThreads]);
 
-  const lastAssistant = [...messages]
-    .reverse()
-    .find((m): m is AssistantMessage => m.role === 'assistant');
-  const lastCitations = lastAssistant?.citations;
+  // Citations sidebar: show the selected answer's sources, defaulting to the
+  // latest answer when nothing is explicitly pinned. Every answer keeps its own
+  // citations, so older questions stay reachable by clicking their footer.
+  const assistantMessages = messages.filter(
+    (m): m is AssistantMessage => m.role === 'assistant'
+  );
+  const lastAssistant = assistantMessages[assistantMessages.length - 1];
+  const selectedAssistant =
+    assistantMessages.find((m) => m.id === selectedAssistantId) ?? lastAssistant;
+  const selectedCitations = selectedAssistant?.citations;
+  const isPinned =
+    selectedAssistant !== undefined && selectedAssistant.id !== lastAssistant?.id;
+  // The question that produced the selected answer (nearest preceding user msg).
+  const selectedQuestion = (() => {
+    if (!selectedAssistant) return undefined;
+    const idx = messages.findIndex((m) => m.id === selectedAssistant.id);
+    for (let i = idx - 1; i >= 0; i -= 1) {
+      const m = messages[i];
+      if (m.role === 'user') return m.text;
+    }
+    return undefined;
+  })();
 
   const updateAssistant = useCallback((id: string, patch: Partial<AssistantMessage>) => {
     setMessages((prev) =>
@@ -92,12 +112,14 @@ export function ChatPage() {
     setCurrentThreadId(null);
     setMessages([]);
     setError(null);
+    setSelectedAssistantId(null);
   }, []);
 
   const onSelectThread = useCallback(
     async (id: string) => {
       if (streaming) return;
       setError(null);
+      setSelectedAssistantId(null);
       const detail = await getThread(id);
       if (!detail) {
         setError('Could not load thread (Lakebase unavailable).');
@@ -143,6 +165,7 @@ export function ChatPage() {
     async (text: string) => {
       if (streaming) return;
       setError(null);
+      setSelectedAssistantId(null); // new question → sidebar follows the latest answer
 
       // Ensure we have a thread (create on first message of a new chat).
       let threadId = currentThreadId;
@@ -283,11 +306,22 @@ export function ChatPage() {
                 {error}
               </div>
             )}
-            <MessageList messages={messages} />
+            <MessageList
+              messages={messages}
+              selectedAssistantId={selectedAssistant?.id}
+              onSelectCitations={setSelectedAssistantId}
+            />
           </>
         }
         input={<MessageInput onSubmit={onSubmit} onCancel={onCancel} streaming={streaming} />}
-        rightSidebar={<CitationsList citations={lastCitations} onOpen={setOpenCitation} />}
+        rightSidebar={
+          <CitationsList
+            citations={selectedCitations}
+            heading={selectedQuestion}
+            pinned={isPinned}
+            onOpen={setOpenCitation}
+          />
+        }
       />
       <DocumentViewer citation={openCitation} onClose={() => setOpenCitation(null)} />
     </>

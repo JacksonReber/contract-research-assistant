@@ -5,9 +5,17 @@ import { AssistantBubble } from './AssistantBubble';
 
 interface MessageListProps {
   messages: ChatMessage[];
+  /** Id of the answer whose citations are currently shown in the sidebar. */
+  selectedAssistantId?: string;
+  /** Pin a given answer's citations into the sidebar. */
+  onSelectCitations?: (id: string) => void;
 }
 
-export function MessageList({ messages }: MessageListProps) {
+export function MessageList({
+  messages,
+  selectedAssistantId,
+  onSelectCitations,
+}: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,11 +41,14 @@ export function MessageList({ messages }: MessageListProps) {
         ) : (
           <AssistantBubble
             key={m.id}
+            messageId={m.id}
             text={m.text}
             done={m.done}
             citations={m.citations}
             traceId={m.traceId}
             error={m.error}
+            selected={m.id === selectedAssistantId}
+            onSelectCitations={onSelectCitations}
           />
         )
       )}

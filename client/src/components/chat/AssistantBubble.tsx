@@ -6,19 +6,27 @@ import type { Citation, MessageError } from '@/lib/types';
 import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
 
 interface AssistantBubbleProps {
+  messageId: string;
   text: string;
   done: boolean;
   citations?: Citation[];
   traceId?: string;
   error?: MessageError;
+  /** Whether this answer's citations are the ones currently shown in the sidebar. */
+  selected?: boolean;
+  /** Pin this answer's citations into the sidebar. */
+  onSelectCitations?: (id: string) => void;
 }
 
 export function AssistantBubble({
+  messageId,
   text,
   done,
   citations,
   traceId,
   error,
+  selected,
+  onSelectCitations,
 }: AssistantBubbleProps) {
   const showThinking = !done && text.length === 0;
   return (
@@ -48,9 +56,24 @@ export function AssistantBubble({
         )}
         {done && !error && citations !== undefined && (
           <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>
-              {citations.length} {citations.length === 1 ? 'citation' : 'citations'}
-            </span>
+            {citations.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => onSelectCitations?.(messageId)}
+                aria-pressed={selected}
+                title="Show these sources in the sidebar"
+                className={
+                  'rounded-full px-2 py-0.5 font-medium transition-colors ' +
+                  (selected
+                    ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
+                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700')
+                }
+              >
+                {citations.length} {citations.length === 1 ? 'citation' : 'citations'}
+              </button>
+            ) : (
+              <span>no citations</span>
+            )}
             {traceId && <FeedbackWidget traceId={traceId} />}
           </div>
         )}
